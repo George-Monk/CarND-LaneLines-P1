@@ -51,16 +51,22 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
 import cv2
+import os
 get_ipython().run_line_magic('matplotlib', 'inline')
+
+# Set directory to Project Base Dir due to the unique way in which VS functions
+ProjectDir = "C:/GitRepo/Udacity_Training/Finding-Lane-Lines-on-the-Road/CarND-LaneLines-P1"
+os.chdir(ProjectDir)
+cwd = os.getcwd()
+print('current working dir is: '+ cwd)
 
 
 # ## Read in an Image
 
 # In[2]:
 
-
 #reading in an image
-image = mpimg.imread('/test_images/solidWhiteRight.jpg')
+image = mpimg.imread('test_images/solidWhiteRight.jpg')
 
 #printing out some stats and plotting
 print('This image is:', type(image), 'with dimensions:', image.shape)
@@ -99,7 +105,7 @@ def grayscale(img):
     return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     # Or use BGR2GRAY if you read an image with cv2.imread()
     # return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
+
 def canny(img, low_threshold, high_threshold):
     """Applies the Canny transform"""
     return cv2.Canny(img, low_threshold, high_threshold)
@@ -190,10 +196,6 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
 # In[4]:
 
 
-import os
-os.listdir("C:/GitRepo/Udacity_Training/Finding-Lane-Lines-on-the-Road/CarND-LaneLines-P1/test_images/")
-
-
 # ## Build a Lane Finding Pipeline
 # 
 # 
@@ -253,13 +255,13 @@ def process_image(image):
 # In[ ]:
 
 
-white_output = 'C:/GitRepo/Udacity_Training/Finding-Lane-Lines-on-the-Road/CarND-LaneLines-P1/test_videos_output/solidWhiteRight.mp4'
+white_output = 'test_videos_output/solidWhiteRight.mp4'
 ## To speed up the testing process you may want to try your pipeline on a shorter subclip of the video
 ## To do so add .subclip(start_second,end_second) to the end of the line below
 ## Where start_second and end_second are integer values representing the start and end of the subclip
 ## You may also uncomment the following line for a subclip of the first 5 seconds
 ##clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4").subclip(0,5)
-clip1 = VideoFileClip("C:/GitRepo/Udacity_Training/Finding-Lane-Lines-on-the-Road/CarND-LaneLines-P1/test_videos/solidWhiteRight.mp4")
+clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4")
 white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
 get_ipython().run_line_magic('time', 'white_clip.write_videofile(white_output, audio=False)')
 
