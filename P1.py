@@ -52,6 +52,8 @@ import matplotlib.image as mpimg
 import numpy as np
 import cv2
 import os
+import glob
+import imageio
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Set directory to Project Base Dir due to the unique way in which VS functions
@@ -61,12 +63,18 @@ cwd = os.getcwd()
 print('current working dir is: '+ cwd)
 
 
+leftLineGradArray = []
+rightLineGradArray = []
+
 # ## Read in an Image
 
 # In[2]:
 
 #reading in an image
-image = mpimg.imread('test_images/solidWhiteRight.jpg')
+image = mpimg.imread('test_images/solidWhiteCurve.jpg')
+
+# Initialise File Count (for File Export)
+fileCount = 1
 
 #printing out some stats and plotting
 print('This image is:', type(image), 'with dimensions:', image.shape)
@@ -139,7 +147,7 @@ def region_of_interest(img, vertices):
     return masked_image
 
 
-def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
+def draw_lines(img, lines,leftLineGradArray, rightLineGradArray, color=[255, 0, 0], thickness=2):
     """
     NOTE: this is the function you might want to use as a starting point once you want to 
     average/extrapolate the line segments you detect to map out the full
@@ -156,9 +164,85 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
     If you want to make the lines semi-transparent, think about combining
     this function with the weighted_img() function below
     """
+    #imgWidth = img.shape[1]
+    #imgHeight = img.shape[0]
+
+    # Append to left line array
+    #leftGradAppend = leftLineGradArray.append
+
+    # Append to right line array
+    #rightGradAppend = rightLineGradArray.append
+
+    x_left  = []
+    y_left  = []
+
+    x_right = []
+    y_right = []
     for line in lines:
         for x1,y1,x2,y2 in line:
+
+            
+
+            # Calculate gradient
+            m = float((y2-y1)/(x2-x1))
+            
+            
+            # If gradient is positive, line is left line
+            if m > 0:
+                #print('left Line gradient: %s' %(m))
+                #leftLineGrad = m
+                #leftGradAppend(m)  
+                
+                # Add left x & y coordinates to Array
+                x_left += [x1, x2]
+                y_left += [y1, y2]
+            # If gradient is negative, line is right line
+            elif m < 0:
+                #print('right line gradient: %s' % (m))
+                #rightLineGrad = m
+                #rightGradAppend(m)
+
+                # Add right x & y coordinates to Array
+                x_right += [x1, x2]
+                y_right += [y1, y2]
+
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
+    
+# Abandoned method for calculating average line and offset
+    #xLeftStartAverage = sum(float(x_left[0]/len(x_left[0])))
+    #xLeftEndAverage = sum(float(x_left[1]/len(x_left[1])))
+    #yLeftStartAverage = sum(float(y_left[0]/len(y_left[0])))
+    #yLeftEndAverage = sum(float(y_left[1]/len(y_left[1])))
+
+    #LeftLine_x = xLeftEndAverage - xLeftStartAverage
+    #LeftLine_y = yLeftEndAverage - yLeftStartAverage
+
+    #print('Left Line average x is : %s'%LeftLine_x)
+    #print('Left Line average y is : %s'%LeftLine_y)
+
+
+
+    leftPolyfit = np.polyfit(x_left, y_left, 1)
+    leftGrad    = leftPolyfit[0]
+    leftOffset  = leftPolyfit[1]
+    print('auto left calculated polyfit: %s'%leftPolyfit)
+    print('seperate left calculated polyfit: %s, %s'%(leftGrad, leftOffset))
+
+    #leftGradAverage = round(float(sum(leftLineGradArray)/len(leftLineGradArray)),3)
+    #print('Left line: %s'%leftLineGradArray)
+    #print('Left line Gradient Average: %s'%leftGradAverage)
+
+    rightPolyfit    = np.polyfit(x_right, y_right, 1)
+    rightGrad       = rightPolyfit[0]
+    rightOffset     = rightPolyfit[1]
+    print('auto right calculated polyfit: %s'%rightPolyfit)
+    print('seperate right calculated polyfit: %s, %s'%(rightGrad, rightOffset))
+    
+    #rightGradAverage = round(float(sum(rightLineGradArray)/len(rightLineGradArray)),3)
+    #print('Right line: %s'%rightLineGradArray)
+    #print('Right Line Gradient Average: %s'%rightGradAverage)
+    print('')
+    return rightLineGradArray, leftLineGradArray
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     """
@@ -168,7 +252,8 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     """
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-    draw_lines(line_img, lines)
+    
+    draw_lines(line_img, lines, leftLineGradArray, rightLineGradArray)
     return line_img
 
 # Python 3 has support for cool math symbols.
@@ -187,6 +272,60 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
     """
     return cv2.addWeighted(initial_img, α, img, β, λ)
 
+def detect_lanes(image, fileCount):
+
+    # Convert Image to Greyscale
+    grey = grayscale(image)
+
+    # Define a kernel size and apply Gaussian smoothing
+    kernel_size = 5
+    BlurredImage = gaussian_blur(grey, kernel_size)
+
+    # Define parameters for Canny Edge Detection
+    low_threshold = 50
+    high_threshold = 150
+    BlurredImageCanny = canny(BlurredImage, low_threshold, high_threshold)
+
+    # Mask Edges of Defined Polygon
+    imshape = image.shape
+    vertices = np.array([[(150,imshape[0]),(450, 320), (imshape[1]-450, 320), (imshape[1]-50,imshape[0])]], dtype=np.int32)
+    MaskedImage = region_of_interest(BlurredImageCanny, vertices)
+
+    # Hough Transform Parameters
+    rho = 1 # distance resolution in pixels of the Hough grid
+    theta = 0.027*np.pi/180 # angular resolution in radians of the Hough grid
+    threshold = 5     # minimum number of votes (intersections in Hough grid cell)
+    min_line_length = 10 #minimum number of pixels making up a line
+    max_line_gap = 2    # maximum gap in pixels between connectable line segments
+    DetectedLines = hough_lines(MaskedImage, rho, theta, threshold, min_line_length, max_line_gap)
+
+    # Merge Images
+    ProcessedImage = weighted_img(DetectedLines, image, α=0.8, β=1., λ=0.)
+
+    outputDir = 'test_images/ProcessedImages/'
+
+    figure = plt.figure(figsize=(20,10))
+
+    plotImage=figure.add_subplot(1,4,1)
+    plt.imshow(image)
+    plotImage.set_title('Unprocessed Image')
+
+    plotImage=figure.add_subplot(1,4,2)
+    plt.imshow(BlurredImageCanny)
+    plotImage.set_title('Post-Canny Image')
+
+    plotImage=figure.add_subplot(1,4,3)
+    plt.imshow(MaskedImage)
+    plotImage.set_title('Masked Image')
+
+    plotImage=figure.add_subplot(1,4,4)
+    plt.imshow(ProcessedImage)
+    plotImage.set_title('Processed Image')
+
+    plt.savefig(outputDir + 'ProcessedImage' + str(fileCount) + '.jpg')
+    
+    return BlurredImageCanny, MaskedImage, ProcessedImage
+
 
 # ## Test Images
 # 
@@ -203,6 +342,16 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
 # Build the pipeline and run your solution on all test_images. Make copies into the `test_images_output` directory, and you can use the images in your writeup report.
 # 
 # Try tuning the various parameters, especially the low and high Canny thresholds as well as the Hough lines parameters.
+#os.listdir("test_images/")
+
+
+for images in glob.iglob('test_images/*.jpg'):
+    loadedImage = images
+    image = mpimg.imread(loadedImage)
+    print('Test Images: %s' % images)
+    detect_lanes(image, fileCount)
+    fileCount += 1
+
 
 # In[5]:
 
@@ -230,6 +379,8 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
 # imageio.plugins.ffmpeg.download()
 # ```
 # **Follow the instructions in the error message and check out [this forum post](https://discussions.udacity.com/t/project-error-of-test-on-videos/274082) for more troubleshooting tips across operating systems.**
+#print('Left line: %s'%leftLineGradArray)
+#print('Right Line: %s'%rightLineGradArray)
 
 # In[ ]:
 
@@ -247,7 +398,35 @@ def process_image(image):
     # TODO: put your pipeline here,
     # you should return the final output (image where lines are drawn on lanes)
 
-    return result
+    # Convert Image to Greyscale
+    grey = grayscale(image)
+
+    # Define a kernel size and apply Gaussian smoothing
+    kernel_size = 5
+    BlurredImage = gaussian_blur(grey, kernel_size)
+
+    # Define parameters for Canny Edge Detection
+    low_threshold = 50
+    high_threshold = 150
+    BlurredImageCanny = canny(BlurredImage, low_threshold, high_threshold)
+
+    # Mask Edges of Defined Polygon
+    imshape = image.shape
+    vertices = np.array([[(150,imshape[0]),(450, 320), (imshape[1]-450, 320), (imshape[1]-50,imshape[0])]], dtype=np.int32)
+    MaskedImage = region_of_interest(BlurredImageCanny, vertices)
+
+    # Hough Transform Parameters
+    rho = 1 # distance resolution in pixels of the Hough grid
+    theta = 0.027*np.pi/180 # angular resolution in radians of the Hough grid
+    threshold = 5     # minimum number of votes (intersections in Hough grid cell)
+    min_line_length = 10 #minimum number of pixels making up a line
+    max_line_gap = 2    # maximum gap in pixels between connectable line segments
+    DetectedLines = hough_lines(MaskedImage, rho, theta, threshold, min_line_length, max_line_gap)
+
+    # Merge Images
+    ProcessedImage = weighted_img(DetectedLines, image, α=0.8, β=1., λ=0.)
+
+    return ProcessedImage
 
 
 # Let's try the one with the solid white lane on the right first ...
