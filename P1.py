@@ -54,6 +54,7 @@ import cv2
 import os
 import glob
 import imageio
+from collections import deque, Counter
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Set directory to Project Base Dir due to the unique way in which VS functions
@@ -62,9 +63,16 @@ os.chdir(ProjectDir)
 cwd = os.getcwd()
 print('current working dir is: '+ cwd)
 
-
 leftLineGradArray = []
 rightLineGradArray = []
+
+xLeftAverageArray = []
+xRightAverageArray = []
+
+xMovingAverage = deque([], maxlen = 15)
+
+# Counter for tracking frame number
+count = Counter()
 
 # ## Read in an Image
 
@@ -147,7 +155,7 @@ def region_of_interest(img, vertices):
     return masked_image
 
 
-def draw_lines(img, lines,leftLineGradArray, rightLineGradArray, color=[255, 0, 0], thickness=2):
+def draw_lines(img, lines,leftLineGradArray, rightLineGradArray, xLeftAverageArray, xRightAverageArray, color=[255, 0, 0], thickness=2):
     """
     NOTE: this is the function you might want to use as a starting point once you want to 
     average/extrapolate the line segments you detect to map out the full
@@ -164,85 +172,163 @@ def draw_lines(img, lines,leftLineGradArray, rightLineGradArray, color=[255, 0, 
     If you want to make the lines semi-transparent, think about combining
     this function with the weighted_img() function below
     """
-    #imgWidth = img.shape[1]
-    #imgHeight = img.shape[0]
-
-    # Append to left line array
-    #leftGradAppend = leftLineGradArray.append
-
-    # Append to right line array
-    #rightGradAppend = rightLineGradArray.append
+    imgWidth = img.shape[1]
+    imgHeight = img.shape[0]
 
     x_left  = []
     y_left  = []
 
     x_right = []
     y_right = []
+
+
+    # Update Frame Count
+    count.update('F')
+    frameCount=count.get('F')
+    print('')
+    print ('Frame Count : %s'%frameCount)
+
+
+    # Append to left line array
+    leftGradAppend = leftLineGradArray.append
+
+    # Append to right line array
+    rightGradAppend = rightLineGradArray.append
+
+    xLeftAverageAppend = xLeftAverageArray.append
+    xRightAverageAppend = xRightAverageArray.append
+    
+
     for line in lines:
         for x1,y1,x2,y2 in line:
 
-            
-
             # Calculate gradient
-            m = float((y2-y1)/(x2-x1))
+            m = (y2-y1)/(x2-x1)
             
             
-            # If gradient is positive, line is left line
-            if m > 0:
-                #print('left Line gradient: %s' %(m))
-                #leftLineGrad = m
-                #leftGradAppend(m)  
+            # If gradient is positive, line is right line
+            if 5 > m > 0:
+                #print('right Line gradient: %s' %(m))
+                rightLineGrad = m
+                rightGradAppend(m)  
                 
-                # Add left x & y coordinates to Array
-                x_left += [x1, x2]
-                y_left += [y1, y2]
-            # If gradient is negative, line is right line
-            elif m < 0:
-                #print('right line gradient: %s' % (m))
-                #rightLineGrad = m
-                #rightGradAppend(m)
-
                 # Add right x & y coordinates to Array
                 x_right += [x1, x2]
                 y_right += [y1, y2]
 
+            # If gradient is negative, line is left line
+            elif -5 < m < -0.5:
+                #print('left line gradient: %s' % (m))
+                leftLineGrad = m
+                leftGradAppend(m)
+
+                # Add left x & y coordinates to Array
+                x_left += [x1, x2]
+                y_left += [y1, y2]
+            
+            
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
-    
-# Abandoned method for calculating average line and offset
-    #xLeftStartAverage = sum(float(x_left[0]/len(x_left[0])))
-    #xLeftEndAverage = sum(float(x_left[1]/len(x_left[1])))
-    #yLeftStartAverage = sum(float(y_left[0]/len(y_left[0])))
-    #yLeftEndAverage = sum(float(y_left[1]/len(y_left[1])))
-
-    #LeftLine_x = xLeftEndAverage - xLeftStartAverage
-    #LeftLine_y = yLeftEndAverage - yLeftStartAverage
-
-    #print('Left Line average x is : %s'%LeftLine_x)
-    #print('Left Line average y is : %s'%LeftLine_y)
 
 
-
-    leftPolyfit = np.polyfit(x_left, y_left, 1)
-    leftGrad    = leftPolyfit[0]
-    leftOffset  = leftPolyfit[1]
-    print('auto left calculated polyfit: %s'%leftPolyfit)
-    print('seperate left calculated polyfit: %s, %s'%(leftGrad, leftOffset))
-
-    #leftGradAverage = round(float(sum(leftLineGradArray)/len(leftLineGradArray)),3)
-    #print('Left line: %s'%leftLineGradArray)
-    #print('Left line Gradient Average: %s'%leftGradAverage)
-
-    rightPolyfit    = np.polyfit(x_right, y_right, 1)
-    rightGrad       = rightPolyfit[0]
-    rightOffset     = rightPolyfit[1]
-    print('auto right calculated polyfit: %s'%rightPolyfit)
-    print('seperate right calculated polyfit: %s, %s'%(rightGrad, rightOffset))
-    
-    #rightGradAverage = round(float(sum(rightLineGradArray)/len(rightLineGradArray)),3)
-    #print('Right line: %s'%rightLineGradArray)
-    #print('Right Line Gradient Average: %s'%rightGradAverage)
     print('')
-    return rightLineGradArray, leftLineGradArray
+    print('x_right 0 : %s'%x_right[0])
+    print('x_right  : %s'%x_right)
+    print('y_right  : %s'%y_right)
+    print('x_left  : %s'%x_left)
+    print('y_left  : %s'%y_left)
+    print('')
+
+    # If no line is detected, do not process & print error
+    if not x_left :
+        print('Empty x_left list, No lines found in this image')
+    elif not x_right :
+        print('Empty x_right list, No lines found in this image')
+    elif not y_left :
+        print('Empty y_left list, No lines found in this image')
+    elif not y_right :
+        print('Empty y_right list, No lines found in this image')
+
+    # If line is detected, continue
+    else :
+        # Calculate average x & y for right line from the array of all detected lines in frame
+        xRightAverage = sum(x_right)/len(x_right)
+        yRightAverage = sum(y_right)/len(y_right)
+        print('Right Line average x is : %s'%xRightAverage)
+        print('Right Line average y is : %s'%yRightAverage)
+
+        # Calculate average x & y for left line from the array of all detected lines in frame
+        xLeftAverage = sum(x_left)/len(x_left)
+        yLeftAverage = sum(y_left)/len(y_left)
+
+        # Create array to store the average over multiple frames, using the value from single frames above
+        xLeftAverageAppend (int(round(xLeftAverage)))
+        xRightAverageAppend (int(round(xRightAverage)))
+
+        # calculate average gradient of right line
+        rightGradAverage = sum(rightLineGradArray)/len(rightLineGradArray)
+        print('Manual Right line Gradient Average: %s'%rightGradAverage)
+        
+        #calculate average gradient of left line
+        leftGradAverage = sum(leftLineGradArray)/len(leftLineGradArray)
+        print('Manual left Line Gradient Average: %s'%leftGradAverage)
+    
+        # Right Line: y=mx+c, therefore, to calculate c, we need c=y-mx
+        cRightAverage = yRightAverage - (rightGradAverage*xRightAverage)
+        print('c right average :   %s'%cRightAverage)
+
+        # Left Line:  y=mx+c, therefore, to calculate c, we need c=y-mx
+        cLeftAverage = yLeftAverage - (leftGradAverage*xLeftAverage)
+        print('c left average :   %s'%cLeftAverage)
+        print('yLeftAverage : %s'%yLeftAverage)
+        print('xLeftAverage : %s'%xLeftAverage)
+        print('')
+
+        # Rearanging for x: x = (y-c)/m
+        #Start of line should be at y = image height
+        x_RightLineStart = int(round((imgHeight-cRightAverage)/rightGradAverage))
+        x_LeftLineStart = int(round((imgHeight-cLeftAverage)/leftGradAverage))
+
+
+        #End of line should be at y = 320
+        y_LineEnd = 320
+
+        # Find end of each line by largest/smallest value in line array
+        x_RightLineEnd = min(x_right)
+        x_LeftLineEnd = max(x_left)
+
+
+        # Calculate end of line by extrapolating using y=mx+c
+        x_ExtrapRightLineEnd = int(round((y_LineEnd-cRightAverage)/rightGradAverage))
+        x_ExtrapLeftLineEnd = int(round((y_LineEnd-cLeftAverage)/leftGradAverage))
+
+        #Take conglomerated average of extrapolated expected value and min/max of array (end of detected line)
+        # A weighting has been added to the more stable y=mx+c calculated x values
+        x_RightLineEndConglomerate = int(round((x_RightLineEnd + x_ExtrapRightLineEnd + x_ExtrapRightLineEnd)/3))
+        x_LeftLineEndConglomerate = int(round((x_LeftLineEnd + x_ExtrapLeftLineEnd + x_ExtrapLeftLineEnd)/3))
+
+        # Append values to moving average array
+        xMovingAverage.append((x_RightLineStart, x_RightLineEndConglomerate, x_LeftLineStart, x_LeftLineEndConglomerate))
+        
+        # Calculate sum of terms within array
+        x_LineAverageSum = np.sum(xMovingAverage, -2)
+        print('x_LineAverageSum : %s'%x_LineAverageSum)
+
+        # If frame count is below the averaging window threshold (sliding window size), display raw values
+        if frameCount <= 15 :
+            cv2.line(img, (x_RightLineStart, imgHeight), (x_ExtrapRightLineEnd , y_LineEnd), color, thickness)
+            cv2.line(img, (x_LeftLineStart, imgHeight), (x_ExtrapLeftLineEnd , y_LineEnd), color, thickness)
+
+        # Otherwise, use averaged values
+        else :
+            x_RightLineStartAverage = int(x_LineAverageSum[0]/len(xMovingAverage))
+            x_RightLineEndAverage = int(x_LineAverageSum[1]/len(xMovingAverage))
+            x_LeftLineStartAverage = int(x_LineAverageSum[2]/len(xMovingAverage))
+            x_LeftLineEndAverage = int(x_LineAverageSum[3]/len(xMovingAverage))
+
+            cv2.line(img, (x_RightLineStartAverage, imgHeight), (x_RightLineEndAverage , y_LineEnd), color, thickness)
+            cv2.line(img, (x_LeftLineStartAverage, imgHeight), (x_LeftLineEndAverage , y_LineEnd), color, thickness)
+
+    return rightLineGradArray, leftLineGradArray, xLeftAverageArray, xRightAverageArray
 
 def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     """
@@ -253,7 +339,7 @@ def hough_lines(img, rho, theta, threshold, min_line_len, max_line_gap):
     lines = cv2.HoughLinesP(img, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
     line_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
     
-    draw_lines(line_img, lines, leftLineGradArray, rightLineGradArray)
+    draw_lines(line_img, lines, leftLineGradArray, rightLineGradArray, xLeftAverageArray, xRightAverageArray)
     return line_img
 
 # Python 3 has support for cool math symbols.
@@ -353,6 +439,7 @@ for images in glob.iglob('test_images/*.jpg'):
     fileCount += 1
 
 
+
 # In[5]:
 
 
@@ -391,6 +478,7 @@ from IPython.display import HTML
 
 
 # In[ ]:
+
 
 
 def process_image(image):
@@ -433,7 +521,9 @@ def process_image(image):
 
 # In[ ]:
 
-
+count.clear()
+xLeftAverageAppend = []
+xRightAverageAppend = []
 white_output = 'test_videos_output/solidWhiteRight.mp4'
 ## To speed up the testing process you may want to try your pipeline on a shorter subclip of the video
 ## To do so add .subclip(start_second,end_second) to the end of the line below
@@ -443,6 +533,7 @@ white_output = 'test_videos_output/solidWhiteRight.mp4'
 clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4")
 white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
 get_ipython().run_line_magic('time', 'white_clip.write_videofile(white_output, audio=False)')
+print('Right Line average x array is : %s'%xRightAverageArray)
 
 
 # Play the video inline, or if you prefer find the video in your filesystem (should be in the same directory) and play it in your video player of choice.
