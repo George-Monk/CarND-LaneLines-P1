@@ -16,6 +16,12 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [image1]: ./examples/grayscale.jpg "Grayscale"
+[image2]: ./test_images/ProcessedImages/solidWhiteCurve.jpg "Solid White Curve"
+[image3]: ./test_images/ProcessedImages/solidWhiteRight.jpg "Solid White Right"
+[image4]: ./test_images/ProcessedImages/solidYellowCurve.jpg "Solid Yellow Curve"
+[image5]: ./test_images/ProcessedImages/solidYellowCurve2.jpg "Solid Yellow Curve 2"
+[image6]: ./test_images/ProcessedImages/solidYellowLeft.jpg "Solid Yellow Left"
+[image7]: ./test_images/ProcessedImages/whiteCarLaneSwitch.jpg "White Car Lane Switch"
 
 ---
 
