@@ -207,7 +207,7 @@ def draw_lines(img, lines,leftLineGradArray, rightLineGradArray, xLeftAverageArr
             
             
             # If gradient is positive, line is right line
-            if 5 > m > 0:
+            if 5 > m > 0.5:
                 #print('right Line gradient: %s' %(m))
                 rightLineGrad = m
                 rightGradAppend(m)  
@@ -229,14 +229,6 @@ def draw_lines(img, lines,leftLineGradArray, rightLineGradArray, xLeftAverageArr
             
             cv2.line(img, (x1, y1), (x2, y2), color, thickness)
 
-
-    print('')
-    print('x_right 0 : %s'%x_right[0])
-    print('x_right  : %s'%x_right)
-    print('y_right  : %s'%y_right)
-    print('x_left  : %s'%x_left)
-    print('y_left  : %s'%y_left)
-    print('')
 
     # If no line is detected, do not process & print error
     if not x_left :
@@ -498,9 +490,9 @@ def process_image(image):
     high_threshold = 150
     BlurredImageCanny = canny(BlurredImage, low_threshold, high_threshold)
 
-    # Mask Edges of Defined Polygon
+    # Mask Edges of Defined Polygon using measurements based on image size for scaling
     imshape = image.shape
-    vertices = np.array([[(150,imshape[0]),(450, 320), (imshape[1]-450, 320), (imshape[1]-50,imshape[0])]], dtype=np.int32)
+    vertices = np.array([[(int(round(imshape[1]/6.4)),imshape[0]),(int(round(imshape[1]/2.133)), int(round(imshape[0]/1.6875))), (int(round(imshape[1]/1.88)), int(round(imshape[0]/1.6875))), (int(round(imshape[1]/1.055)),imshape[0])]], dtype=np.int32)
     MaskedImage = region_of_interest(BlurredImageCanny, vertices)
 
     # Hough Transform Parameters
@@ -533,7 +525,7 @@ white_output = 'test_videos_output/solidWhiteRight.mp4'
 clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4")
 white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
 get_ipython().run_line_magic('time', 'white_clip.write_videofile(white_output, audio=False)')
-print('Right Line average x array is : %s'%xRightAverageArray)
+#print('Right Line average x array is : %s'%xRightAverageArray)
 
 
 # Play the video inline, or if you prefer find the video in your filesystem (should be in the same directory) and play it in your video player of choice.
@@ -558,7 +550,9 @@ HTML("""
 
 # In[ ]:
 
-
+count.clear()
+xLeftAverageAppend = []
+xRightAverageAppend = []
 yellow_output = 'test_videos_output/solidYellowLeft.mp4'
 ## To speed up the testing process you may want to try your pipeline on a shorter subclip of the video
 ## To do so add .subclip(start_second,end_second) to the end of the line below
@@ -591,7 +585,9 @@ HTML("""
 
 # In[ ]:
 
-
+count.clear()
+xLeftAverageAppend = []
+xRightAverageAppend = []
 challenge_output = 'test_videos_output/challenge.mp4'
 ## To speed up the testing process you may want to try your pipeline on a shorter subclip of the video
 ## To do so add .subclip(start_second,end_second) to the end of the line below
