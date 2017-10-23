@@ -55,6 +55,7 @@ import os
 import glob
 import imageio
 from collections import deque, Counter
+# Needed for Jupyter?
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Set directory to Project Base Dir due to the unique way in which VS functions
@@ -63,9 +64,11 @@ os.chdir(ProjectDir)
 cwd = os.getcwd()
 print('current working dir is: '+ cwd)
 
+#Create array for storing gradients
 leftLineGradArray = []
 rightLineGradArray = []
 
+# Create array for storing average x values
 xLeftAverageArray = []
 xRightAverageArray = []
 
