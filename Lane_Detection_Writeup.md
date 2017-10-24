@@ -36,7 +36,6 @@ In order to draw a single line on the left and right lanes, I modified the draw_
 If you'd like to include images to show how the pipeline works, here is how to include an image: 
 
 ![alt text][image1]
-
 --------------------------------------------------------------------------------------------------------------
 This is the Grayscale image
 
