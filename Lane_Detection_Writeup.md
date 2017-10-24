@@ -18,14 +18,19 @@ The goals / steps of this project are the following:
 [image1]: ./examples/grayscale.jpg "Grayscale"
 --------------------------------------------------------------------------------------------------------------
 [image2]: ./test_images/ProcessedImages/ProcessedImage1.jpg "Solid White Curve"
+
 --------------------------------------------------------------------------------------------------------------
 [image3]: ./test_images/ProcessedImages/ProcessedImage2.jpg "Solid White Right"
+
 --------------------------------------------------------------------------------------------------------------
 [image4]: ./test_images/ProcessedImages/ProcessedImage3.jpg "Solid Yellow Curve"
+
 --------------------------------------------------------------------------------------------------------------
 [image5]: ./test_images/ProcessedImages/ProcessedImage4.jpg "Solid Yellow Curve 2"
+
 --------------------------------------------------------------------------------------------------------------
 [image6]: ./test_images/ProcessedImages/ProcessedImage5.jpg "Solid Yellow Left"
+
 --------------------------------------------------------------------------------------------------------------
 [image7]: ./test_images/ProcessedImages/ProcessedImage6.jpg "White Car Lane Switch"
 
