@@ -85,6 +85,8 @@ Manual calculation of gradient and 'c' (y=mx+c), could use library function such
 
 Average is over 15 frames (could result in slow response for fast corners)
 
+Although the defined mask scales with video image size, it has been calibrated and fixed to the camera position in the given examples. It could be adjusted to look at a more confined area ( it occasionaly detects distant vehicles as road markings, resulting in line average creep). Additionaly, it could be programmed to automatically adjust for corners by bending left/right when a turn is detected.
+
 
 
 
