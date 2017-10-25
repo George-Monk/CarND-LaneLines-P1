@@ -35,7 +35,7 @@ Next, Gaussian smoothing was applied, using a kernel size of 5 in this case. The
 
 Following this, Canny Edge detection was performed, using a lower bound of 50 and an upper of 150, this highlights the areas of an image where there is a large delta in pixel value along consecutive, neighboring pixels which constitutes the edge of an object within an image (including the outline of the lane lines).
 
-the next step was to mask the image to remove the unwanted information, outside the area of interest (the road ahead). This was achieved by creating a trapezium-shaped polygon to select the lane ahead only.
+the next step was to mask the image to remove the unwanted information, outside the area of interest (the road ahead). This was achieved by creating a trapezium-shaped polygon which scaled with the dimensions of the image/frame, to select the lane ahead only.
 
 
 
