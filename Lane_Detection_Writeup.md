@@ -75,6 +75,18 @@ If you'd like to include images to show how the pipeline works, here is how to i
 
 
 One potential shortcoming would be what would happen when ... 
+No predictive plot, so loss of line detection could lead to blank/flicker (no plot)
+
+Method does not perform plausability check based on average of last few frames (complex shadows/road markings may lead to significant error)
+
+Extensive use of lists (could be optimised)
+
+Manual calculation of gradient and 'c' (y=mx+c), could use library function such as Numpy Polyfit/Poly1d/Linspace method.
+
+Average is over 15 frames (could result in slow response for fast corners)
+
+
+
 
 Another shortcoming could be ...
 
