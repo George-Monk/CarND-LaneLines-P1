@@ -37,6 +37,9 @@ Following this, Canny Edge detection was performed, using a lower bound of 50 an
 
 the next step was to mask the image to remove the unwanted information, outside the area of interest (the road ahead). This was achieved by creating a trapezium-shaped polygon which scaled with the dimensions of the image/frame, to select the lane ahead only.
 
+The Hough Transform was then performed on the image to identify lines within the masked image area. 
+
+The detected lines were then drawm on the image
 
 
 In order to draw a single line on the left and right lanes, I modified the draw_lines() function by ...
