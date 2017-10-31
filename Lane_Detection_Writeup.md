@@ -39,7 +39,15 @@ the next step was to mask the image to remove the unwanted information, outside 
 
 The Hough Transform was then performed on the image to identify lines within the masked image area. 
 
-The detected lines were then drawm on the image
+The next step was perhaps the most involved and required significant modification of the draw_lines function. The multiple detected lines from the Hough Transform are taken by the draw_lines function where their gradients are first analysed to determine if the line is part of the detected right line, or left line. As the x and y values are counted from the top left in image processing, this meant that a line with a positive gradient represented a line along a road marking on the right side of the vehicle and a negative gradient represented a line marking along the left.
+
+After separating the lines based on their gradients, their line start/end coordinates were stored in an array where they could be used to determine the overall average description of each line so that a single line could be drawn for each. In this instance, two methods were implemented:
+
+  - Calculation of line description using 'y = mx + c' 
+
+  - Calculation of the start and end of a line, using 'y = mx + c' for the start of the line, assuming the start of the line to be at       the bottom of the image (y = image height), and the end of the line being the coordinates with the largest/smallest value of 'x'         within the stored array for each frame (largest for left line and smallest for right line).
+
+
 
 
 In order to draw a single line on the left and right lanes, I modified the draw_lines() function by ...
